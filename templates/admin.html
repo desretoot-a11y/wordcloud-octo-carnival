@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Админ-панель - Облако слов</title>
+<style>
+/* Аналогичные стили из index.html, плюс дополнительные для админки */
+.admin-header {
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #3498db;
+    margin: 10px 0;
+}
+
+.admin-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.cloud-container {
+    text-align: center;
+    margin: 30px 0;
+}
+
+#global-cloud {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<div class="admin-header">
+    <h1>Панель администратора</h1>
+    <p>Общее облако слов из всех добавленных слов участников</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h2>Всего слов</h2>
+        <div class="stat-value">{{ words_count }}</div>
+        <p>добавлено участниками</p>
+    </div>
+    
+    <div class="stat-card">
+        <h2>Обновить облако</h2>
+        <button onclick="refreshCloud()">🔄 Обновить</button>
+    </div>
+</div>
+
+<div class="admin-controls">
+    <button class="btn-clear" onclick="clearAllWords()">⚠️ Очистить ВСЕ слова</button>
+</div>
+
+<div class="cloud-container">
+    <img id="global-cloud" src="{{ url_for('global_cloud_image') }}?ts={{ ts }}" alt="Общее облако слов">
+</div>
+
+<script>
+// Обновление облака слов
+function refreshCloud() {
+    const img = document.getElementById("global-cloud");
+    img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
+}
+
+// Очистка всех слов
+function clearAllWords() {
+    if (confirm("ВЫ УВЕРЕНЫ? Это удалит ВСЕ слова всех участников!")) {
+        window.location.href = "{{ url_for('clear_all_words', password=request.args.get('password')) }}";
+    }
+}
+</script>
+</body>
+</html>
