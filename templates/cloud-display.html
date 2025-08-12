@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Облако слов - Полный экран</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -110,6 +111,41 @@
             opacity: 0.5;
             font-size: 0.9rem;
         }
+                .cloud-container {
+            width: 95vw;
+            height: 85vh;
+            position: relative;
+        }
+        
+        #word-cloud {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .word {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .word:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
         
         @media (max-width: 768px) {
             .title h1 {
@@ -129,7 +165,7 @@
     </div>
     
     <div class="cloud-container">
-        <img id="cloud" src="{{ url_for('global_cloud_image') }}?ts={{ ts }}" alt="Облако слов">
+        <div id="word-cloud"></div>
         
         <div class="controls">
             <button class="btn refresh-btn" onclick="refreshCloud()">🔄 Обновить</button>
@@ -142,11 +178,121 @@
     </div>
 
     <script>
+        <script>
+        // Элемент для подсказок
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        // Цветовая палитра в стиле DiaClass
+        const colors = [
+            "#ff6b6b", "#4ecdc4", "#45b7d1", "#ffbe0b", 
+            "#fb5607", "#8338ec", "#3a86ff", "#ff006e"
+        ];
+
+        // Загрузка данных и построение облака
+        function loadWordCloud() {
+            fetch('/word-frequencies')
+                .then(response => response.json())
+                .then(data => {
+                    drawWordCloud(data);
+                });
+        }
+
+        // Построение интерактивного облака
+        function drawWordCloud(words) {
+            const container = document.getElementById('word-cloud');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Очищаем предыдущее облако
+            d3.select("#word-cloud").html("");
+            
+            // Создаем SVG контейнер
+            const svg = d3.select("#word-cloud")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width/2}, ${height/2})`);
+            
+            // Шкала для размеров слов
+            const maxFreq = d3.max(words, d => d.size);
+            const sizeScale = d3.scaleLinear()
+                .domain([0, maxFreq])
+                .range([20, 100]);
+            
+            // Генерация облака
+            const layout = d3.layout.cloud()
+                .size([width, height])
+                .words(words)
+                .padding(5)
+                .rotate(() => (Math.random() > 0.5 ? 0 : 90))
+                .font("Montserrat")
+                .fontSize(d => sizeScale(d.size))
+                .on("end", draw);
+            
+            layout.start();
+            
+            function draw(words) {
+                const word = svg.selectAll("text")
+                    .data(words)
+                    .enter().append("text")
+                    .style("font-size", d => `${d.size}px`)
+                    .style("font-family", "Montserrat, sans-serif")
+                    .style("fill", (d, i) => colors[i % colors.length])
+                    .attr("text-anchor", "middle")
+                    .attr("class", "word")
+                    .attr("transform", d => `translate(${d.x}, ${d.y})rotate(${d.rotate})`)
+                    .text(d => d.text)
+                    .on("mouseover", function(event, d) {
+                        // Анимация при наведении
+                        d3.select(this).transition()
+                            .duration(200)
+                            .style("font-size", `${d.size * 1.2}px`)
+                            .style("opacity", 1);
+                        
+                        // Показываем подсказку
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", 0.9);
+                        tooltip.html(`<strong>${d.text}</strong><br>Частота: ${d.size}`)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                        // Возвращаем исходный размер
+                        d3.select(this).transition()
+                            .duration(200)
+                            .style("font-size", `${d.size}px`);
+                        
+                        // Скрываем подсказку
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    })
+                    .on("click", d => {
+                        // Пульсирующая анимация при клике
+                        d3.select(this)
+                            .transition()
+                            .duration(200)
+                            .style("opacity", 0.5)
+                            .transition()
+                            .duration(200)
+                            .style("opacity", 1);
+                    });
+            }
+        }
+        
         // Обновление облака
         function refreshCloud() {
-            const img = document.getElementById("cloud");
-            img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
+            loadWordCloud();
         }
+        // // Обновление облака
+        // function refreshCloud() {
+        //     const img = document.getElementById("cloud");
+        //     img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
+        // }
         
         // Переключение полноэкранного режима
         function toggleFullscreen() {
@@ -161,6 +307,7 @@
         
         // Автообновление каждые 30 секунд
         setInterval(refreshCloud, 30000);
+        loadWordCloud();
     </script>
 </body>
 </html>
