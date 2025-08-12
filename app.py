@@ -2,82 +2,120 @@ import os
 import io
 import time
 import threading
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
-
-# Для генерации облака слов
+import re
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, jsonify
 from wordcloud import WordCloud, STOPWORDS
+import pymorphy3  # Для лемматизации русских слов
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 
-# Потокобезопасное хранилище для всех слов
+# Инициализация морфологического анализатора
+morph = pymorphy3.MorphAnalyzer()
+
+# Функция для нормализации слов
+def normalize_word(word):
+    # Приводим к нижнему регистру
+    word = word.lower().strip()
+    
+    # Удаляем знаки препинания (кроме дефисов и апострофов)
+    word = re.sub(r'[^\w\s\'-]', '', word)
+    
+    # Лемматизация
+    parsed = morph.parse(word)[0]
+    return parsed.normal_form
+
+# Потокобезопасное хранилище
 class GlobalStorage:
     def __init__(self):
         self.all_words = []
         self.lock = threading.Lock()
     
-    def add_word(self, word):
+    def add_word(self, user_id, word):
+        normalized = normalize_word(word)
         with self.lock:
-            self.all_words.append(word)
+            self.all_words.append({
+                "raw": word,
+                "normalized": normalized,
+                "user_id": user_id
+            })
+    
+    def remove_user_words(self, user_id):
+        with self.lock:
+            self.all_words = [w for w in self.all_words if w['user_id'] != user_id]
+    
+    def remove_word(self, user_id, word):
+        normalized = normalize_word(word)
+        with self.lock:
+            self.all_words = [
+                w for w in self.all_words 
+                if not (w['user_id'] == user_id and w['normalized'] == normalized)
+            ]
+    
+    def get_all_normalized_words(self):
+        with self.lock:
+            # Возвращаем только нормализованные слова
+            return [w['normalized'] for w in self.all_words]
+    
+    def get_user_words(self, user_id):
+        with self.lock:
+            return [
+                w['raw'] for w in self.all_words 
+                if w['user_id'] == user_id
+            ]
     
     def clear_all(self):
         with self.lock:
             self.all_words = []
-    
-    def get_all_words(self):
-        with self.lock:
-            return self.all_words.copy()
 
 global_storage = GlobalStorage()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Инициализация сессии пользователя
-    if 'user_words' not in session:
-        session['user_words'] = []
+    # Генерируем уникальный ID пользователя, если нет
+    if 'user_id' not in session:
+        session['user_id'] = os.urandom(16).hex()
+    
+    user_id = session['user_id']
     
     if request.method == "POST":
         text = request.form.get("text", "").strip()
         if text:
-            # Добавляем слово в личный список пользователя
-            session['user_words'].append(text)
-            session.modified = True
-            
-            # Добавляем слово в глобальную копилку
-            global_storage.add_word(text)
+            # Добавляем каждое слово отдельно
+            for word in text.split():
+                if word.strip():
+                    global_storage.add_word(user_id, word.strip())
             
         return redirect(url_for('index'))
     
+    # Получаем слова текущего пользователя
+    user_words = global_storage.get_user_words(user_id)
+    
     return render_template(
         "index.html",
-        user_words=session.get('user_words', []),
+        user_words=user_words,
         ts=int(time.time())
     )
 
-@app.route("/user-cloud.png")
-def user_cloud_image():
-    user_words = session.get('user_words', [])
-    if not user_words:
-        return "Нет слов для облака", 400
-    
-    return generate_wordcloud_image(" ".join(user_words))
-
 @app.route("/global-cloud.png")
 def global_cloud_image():
-    all_words = global_storage.get_all_words()
+    all_words = global_storage.get_all_normalized_words()
     if not all_words:
         return "Нет слов для облака", 400
     
-    return generate_wordcloud_image(" ".join(all_words))
-
-def generate_wordcloud_image(text):
-    # Генерация облака слов
+    # Фильтрация стоп-слов
+    russian_stopwords = set(STOPWORDS) | {
+        'это', 'как', 'так', 'и', 'в', 'над', 'к', 'до', 'не', 'на', 'но', 'за', 'то', 'с', 'ли',
+        'а', 'во', 'от', 'со', 'для', 'о', 'же', 'ну', 'вы', 'бы', 'что', 'кто', 'он', 'она'
+    }
+    
+    text = " ".join(all_words)
     wc = WordCloud(
         width=1200,
         height=600,
         background_color="white",
         collocations=False,
-        stopwords=STOPWORDS,
+        stopwords=russian_stopwords,
         max_words=200,
         prefer_horizontal=0.9,
         min_font_size=10,
@@ -90,32 +128,45 @@ def generate_wordcloud_image(text):
     img_io.seek(0)
     return send_file(img_io, mimetype="image/png")
 
+@app.route("/remove-word", methods=["POST"])
+def remove_word():
+    if 'user_id' not in session:
+        return jsonify(success=False), 401
+    
+    user_id = session['user_id']
+    word = request.form.get("word")
+    
+    if not word:
+        return jsonify(success=False), 400
+    
+    global_storage.remove_word(user_id, word)
+    return jsonify(success=True)
+
 @app.route("/clear-user")
 def clear_user_words():
-    # Очищаем только слова текущего пользователя
-    if 'user_words' in session:
-        session.pop('user_words')
-        session.modified = True
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
+    user_id = session['user_id']
+    global_storage.remove_user_words(user_id)
     return redirect(url_for('index'))
 
 @app.route("/admin")
 def admin_panel():
-    # Простая защита паролем
     admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
     if request.args.get('password') != admin_password:
         return "Неверный пароль", 403
     
-    all_words = global_storage.get_all_words()
+    all_words = global_storage.get_all_normalized_words()
     return render_template(
         "admin.html",
-        all_words=all_words,
         words_count=len(all_words),
+        unique_words_count=len(set(all_words)),
         ts=int(time.time())
     )
 
 @app.route("/clear-all")
 def clear_all_words():
-    # Очищаем все слова
     admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
     if request.args.get('password') != admin_password:
         return "Неверный пароль", 403
