@@ -67,6 +67,43 @@ class GlobalStorage:
     def clear_all(self):
         with self.lock:
             self.all_words = []
+    
+    def get_all_words_with_info(self):
+        """Возвращает все слова с дополнительной информацией"""
+        with self.lock:
+            return [
+                {
+                    "id": idx,
+                    "raw": w['raw'],
+                    "normalized": w['normalized'],
+                    "user_id": w['user_id'],
+                    "timestamp": w.get('timestamp', time.time())
+                }
+                for idx, w in enumerate(self.all_words)
+            ]
+    
+    def remove_word_by_id(self, word_id):
+        """Удаляет слово по ID"""
+        try:
+            word_id = int(word_id)
+        except ValueError:
+            return False
+        
+        with self.lock:
+            if 0 <= word_id < len(self.all_words):
+                del self.all_words[word_id]
+                return True
+        return False
+    
+    def add_word(self, user_id, word):
+        normalized = normalize_word(word)
+        with self.lock:
+            self.all_words.append({
+                "raw": word,
+                "normalized": normalized,
+                "user_id": user_id,
+                "timestamp": time.time()  # Добавляем метку времени
+            })
 
 global_storage = GlobalStorage()
 
@@ -96,6 +133,41 @@ def index():
         user_words=user_words,
         ts=int(time.time())
     )
+
+
+@app.route("/display")
+def display_fullscreen():
+    """Полноэкранное отображение облака слов"""
+    return render_template("cloud-display.html", ts=int(time.time()))
+
+@app.route("/admin/words")
+def admin_words_panel():
+    """Панель управления словами"""
+    admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    if request.args.get('password') != admin_password:
+        return "Неверный пароль", 403
+    
+    # Получаем все слова с информацией о пользователе
+    all_words = global_storage.get_all_words_with_info()
+    return render_template(
+        "admin-words.html",
+        all_words=all_words,
+        ts=int(time.time())
+    )
+
+@app.route("/admin/remove-word", methods=["POST"])
+def admin_remove_word():
+    """Удаление слова администратором"""
+    admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    if request.form.get('password') != admin_password:
+        return "Неверный пароль", 403
+    
+    word_id = request.form.get('word_id')
+    if not word_id:
+        return "Не указан ID слова", 400
+    
+    global_storage.remove_word_by_id(word_id)
+    return jsonify(success=True)
 
 @app.route("/global-cloud.png")
 def global_cloud_image():
