@@ -2,9 +2,11 @@ services:
   - type: web
     name: word-cloud-app
     env: python
+    pythonVersion: "3.12.3"
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
     envVars:
       - key: SECRET_KEY
         generateValue: true
-    plan: free
+      - key: ADMIN_PASSWORD
+        value: 123456
