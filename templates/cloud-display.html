@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Облако слов - Полный экран</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .cloud-container {
+            width: 90vw;
+            height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        #cloud {
+            max-width: 100%;
+            max-height: 100%;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        }
+        
+        .title {
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .title h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .title p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+        
+        .refresh-btn {
+            background: rgba(46, 204, 113, 0.3);
+        }
+        
+        .fullscreen-btn {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        
+        .watermark {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            opacity: 0.5;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .title h1 {
+                font-size: 2.5rem;
+            }
+            
+            .title p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="title">
+        <h1>Облако слов</h1>
+        <p>Сгенерировано на основе введенных участниками слов</p>
+    </div>
+    
+    <div class="cloud-container">
+        <img id="cloud" src="{{ url_for('global_cloud_image') }}?ts={{ ts }}" alt="Облако слов">
+        
+        <div class="controls">
+            <button class="btn refresh-btn" onclick="refreshCloud()">🔄 Обновить</button>
+            <button class="btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Полный экран</button>
+        </div>
+        
+        <div class="watermark">
+            Сгенерировано в реальном времени
+        </div>
+    </div>
+
+    <script>
+        // Обновление облака
+        function refreshCloud() {
+            const img = document.getElementById("cloud");
+            img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
+        }
+        
+        // Переключение полноэкранного режима
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        // Автообновление каждые 30 секунд
+        setInterval(refreshCloud, 30000);
+    </script>
+</body>
+</html>
