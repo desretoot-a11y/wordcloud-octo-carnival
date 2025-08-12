@@ -53,6 +53,15 @@ def clear():
         session.pop('entries')
     return redirect(url_for('index'))
 
+@app.route("/remove-entry", methods=["POST"])
+def remove_entry():
+    index = request.json.get('index')
+    if 'entries' in session and 0 <= index < len(session['entries']):
+        session['entries'].pop(index)
+        session.modified = True
+        return jsonify(success=True)
+    return jsonify(success=False), 400
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
