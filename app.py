@@ -246,6 +246,14 @@ def clear_all_words():
     global_storage.clear_all()
     return redirect(url_for('admin_panel', password=request.args.get('password')))
 
+@app.template_filter('datetime')
+def format_datetime(value):
+    """Форматирует timestamp в читаемую дату"""
+    try:
+        return datetime.fromtimestamp(value).strftime('%H:%M:%S')
+    except:
+        return "N/A"
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
