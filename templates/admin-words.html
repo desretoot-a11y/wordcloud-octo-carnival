@@ -152,6 +152,24 @@
             font-size: 0.8rem;
             color: #95a5a6;
         }
+        .words-table tr {
+            transition: all 0.3s ease;
+        }    
+
+        .words-table tr.removing {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
@@ -210,23 +228,29 @@
     <script>
         // Удаление слова администратором
         function removeWord(wordId) {
-            if (confirm(`Вы уверены, что хотите удалить слово с ID ${wordId}?`)) {
-                const formData = new FormData();
-                formData.append('word_id', wordId);
-                formData.append('password', '{{ request.args.get('password') }}');
+            if (confirm(`Удалить слово с ID ${wordId}?`)) {
+                const row = document.querySelector(`tr:has(td.word-id:contains("${wordId}")`);
                 
-                fetch('/admin/remove-word', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Удаляем строку из таблицы
-                        document.querySelector(`tr:has(td.word-id:contains("${wordId}")`).remove();
-                    } else {
-                        alert('Ошибка при удалении слова');
-                    }
-                });
+                // Анимация удаления
+                row.classList.add('removing');
+                
+                setTimeout(() => {
+                    fetch('/admin/remove-word', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            'word_id': wordId,
+                            'password': '{{ request.args.get("password") }}'
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            row.remove();
+                        } else {
+                            row.classList.remove('removing');
+                            alert('Ошибка при удалении слова');
+                        }
+                    });
+                }, 300);
             }
         }
         
