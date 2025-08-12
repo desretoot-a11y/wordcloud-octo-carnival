@@ -13,6 +13,24 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 # Инициализация морфологического анализатора
 morph = pymorphy3.MorphAnalyzer()
 
+@app.route("/word-frequencies")
+def word_frequencies():
+    """Возвращает частоты слов в формате JSON"""
+    all_words = global_storage.get_all_normalized_words()
+    if not all_words:
+        return jsonify([])
+    
+    # Подсчитываем частоты
+    word_counts = Counter(all_words)
+    
+    # Форматируем для D3.js
+    words_data = [
+        {"text": word, "size": count}
+        for word, count in word_counts.items()
+    ]
+    
+    return jsonify(words_data)
+
 # Функция для нормализации слов
 def normalize_word(word):
     # Приводим к нижнему регистру
