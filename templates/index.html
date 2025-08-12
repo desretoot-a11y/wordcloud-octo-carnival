@@ -140,6 +140,20 @@ button:hover {
         flex-direction: column;
     }
 }
+.entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.remove-word-btn {
+    color: #e74c3c;
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -157,16 +171,17 @@ button:hover {
     </div>
 
     <div class="card">
-        <div class="entries-container">
-            <div class="entries-header">
-                <div class="entries-title">Ваши слова</div>
-                <div class="entries-count">{{ user_words|length }} слов</div>
-            </div>
-            <div class="entries">
-                {% for word in user_words %}
-                    <div class="entry-item">{{ word }}</div>
-                {% endfor %}
-            </div>
+        <div class="entries">
+            {% for word in user_words %}
+                <div class="entry-item">
+                    <span>{{ word }}</span>
+                    <span class="remove-word-btn" onclick="removeWord('{{ word }}')">✕</span>
+                </div>
+            {% else %}
+                <div style="text-align: center; color: #95a5a6; font-style: italic; padding: 20px;">
+                    Вы пока не добавили слов
+                </div>
+            {% endfor %}
         </div>
         
         <div class="controls">
@@ -185,6 +200,25 @@ window.onload = function() {
 function clearUserWords() {
     if (confirm("Вы уверены, что хотите очистить ВАШ список слов?")) {
         window.location.href = "{{ url_for('clear_user_words') }}";
+    }
+};
+function removeWord(word) {
+    if (confirm(`Удалить слово "${word}"?`)) {
+        fetch('/remove-word', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `word=${encodeURIComponent(word)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка при удалении слова');
+            }
+        });
     }
 }
 </script>
