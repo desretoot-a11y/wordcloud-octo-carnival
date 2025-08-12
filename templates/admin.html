@@ -82,6 +82,12 @@
     </div>
 </div>
 
+<div class="admin-nav">
+    <a href="{{ url_for('admin_panel', password=request.args.get('password')) }}" class="active">Облако</a>
+    <a href="{{ url_for('admin_words_panel', password=request.args.get('password')) }}">Слова</a>
+    <a href="{{ url_for('display_fullscreen') }}" target="_blank">Полный экран</a>
+</div>
+
 <div class="admin-controls">
     <button class="btn-clear" onclick="clearAllWords()">⚠️ Очистить ВСЕ слова</button>
 </div>
