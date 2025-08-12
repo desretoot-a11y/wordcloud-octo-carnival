@@ -3,12 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Word Cloud Generator</title>
+<title>Добавьте слова в общее облако</title>
 <style>
 :root {
     --primary: #3498db;
-    --danger: #e74c3c;
-    --success: #2ecc71;
     --light: #f8f9fa;
     --dark: #343a40;
 }
@@ -31,11 +29,6 @@ header {
 h1 {
     color: #2c3e50;
     margin-bottom: 10px;
-}
-
-.subtitle {
-    color: #7f8c8d;
-    font-size: 1.1rem;
 }
 
 .card {
@@ -69,6 +62,8 @@ input[type=text]:focus {
 
 button {
     padding: 12px 20px;
+    background: var(--primary);
+    color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -77,32 +72,9 @@ button {
     transition: all 0.3s;
 }
 
-.btn-primary {
-    background: var(--primary);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: white;
-}
-
-.btn-success {
-    background: var(--success);
-    color: white;
-}
-
 button:hover {
     opacity: 0.9;
     transform: translateY(-2px);
-}
-
-.controls {
-    display: flex;
-    gap: 10px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-    justify-content: center;
 }
 
 .entries-container {
@@ -136,27 +108,16 @@ button:hover {
     border: 1px solid #eee;
     border-radius: 8px;
     padding: 15px;
+    text-align: left;
 }
 
 .entry-item {
     padding: 8px 0;
     border-bottom: 1px solid #f1f1f1;
-    display: flex;
-    justify-content: space-between;
-}
-
-.entry-item:last-child {
-    border-bottom: none;
-}
-
-.entry-remove {
-    color: var(--danger);
-    cursor: pointer;
-    margin-left: 10px;
 }
 
 .entries:empty::before {
-    content: "Ваш список слов пуст";
+    content: "Вы пока не добавили слов";
     display: block;
     text-align: center;
     color: #95a5a6;
@@ -164,110 +125,53 @@ button:hover {
     padding: 20px;
 }
 
-#cloud-container {
-    text-align: center;
-    margin: 30px 0;
-    min-height: 300px;
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
 }
 
-#cloud {
-    max-width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-#loader {
-    display: none;
-    text-align: center;
-    padding: 30px;
-}
-
-.loader-spinner {
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid var(--primary);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.message {
-    padding: 15px;
-    border-radius: 8px;
-    margin: 15px 0;
-    display: none;
-}
-
-.message.error {
-    background: #ffebee;
-    color: #c62828;
+.btn-clear {
+    background: #e74c3c;
 }
 
 @media (max-width: 600px) {
     form {
         flex-direction: column;
     }
-    
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
 }
 </style>
 </head>
 <body>
 <header>
-    <h1>Генератор Облака Слов</h1>
-    <p class="subtitle">Добавляйте слова и создавайте уникальные облака</p>
+    <h1>Добавьте слова в общее облако</h1>
+    <p>Ваши слова будут видны только вам. Общее облако сформируется из всех добавленных слов.</p>
 </header>
 
 <main>
     <div class="card">
         <form method="POST">
             <input type="text" name="text" placeholder="Введите слово или фразу" required>
-            <button type="submit" class="btn-primary">Добавить</button>
+            <button type="submit">Добавить</button>
         </form>
-
-        <div class="controls">
-            <button class="btn-success" onclick="buildCloud()">📷 Создать Облако</button>
-            <button class="btn-danger" onclick="confirmClear()">❌ Очистить Мой Список</button>
-        </div>
     </div>
 
     <div class="card">
         <div class="entries-container">
             <div class="entries-header">
                 <div class="entries-title">Ваши слова</div>
-                <div class="entries-count">{{ session.entries|length }} слов</div>
+                <div class="entries-count">{{ user_words|length }} слов</div>
             </div>
             <div class="entries">
-                {% for e in session.entries %}
-                    <div class="entry-item">
-                        <span>{{ e }}</span>
-                        <span class="entry-remove" onclick="removeEntry({{ loop.index0 }})">✕</span>
-                    </div>
+                {% for word in user_words %}
+                    <div class="entry-item">{{ word }}</div>
                 {% endfor %}
             </div>
         </div>
-    </div>
-
-    <div id="message" class="message"></div>
-
-    <div id="cloud-container">
-        {% if session.entries %}
-            <img id="cloud" src="{{ url_for('cloud_image') }}?ts={{ ts }}" alt="Облако слов">
-        {% endif %}
-    </div>
-
-    <div id="loader">
-        <div class="loader-spinner"></div>
-        <p>Создаем ваше уникальное облако слов...</p>
+        
+        <div class="controls">
+            <button class="btn-clear" onclick="clearUserWords()">❌ Очистить мои слова</button>
+        </div>
     </div>
 </main>
 
@@ -277,93 +181,11 @@ window.onload = function() {
     document.querySelector('input[name="text"]').focus();
 };
 
-// Генерация облака слов
-function buildCloud() {
-    const container = document.getElementById("cloud-container");
-    const message = document.getElementById("message");
-    const loader = document.getElementById("loader");
-    const entries = document.querySelector('.entries');
-    
-    // Сброс состояния
-    message.style.display = 'none';
-    container.innerHTML = '';
-    
-    // Проверка наличия слов
-    if (!entries.children.length || 
-        (entries.children.length === 1 && entries.textContent.includes("Ваш список слов пуст"))) {
-        showMessage('Добавьте хотя бы одно слово для создания облака', 'error');
-        return;
-    }
-    
-    // Показать загрузчик
-    loader.style.display = 'block';
-    
-    // Создать элемент изображения
-    const img = document.createElement('img');
-    img.id = 'cloud';
-    img.alt = 'Облако слов';
-    img.style.display = 'none';
-    container.appendChild(img);
-    
-    // Установить источник с таймстампом
-    img.src = "{{ url_for('cloud_image') }}?ts=" + Date.now();
-    
-    // Обработчики загрузки
-    img.onload = function() {
-        loader.style.display = 'none';
-        img.style.display = 'block';
-        window.scrollTo({
-            top: container.offsetTop,
-            behavior: 'smooth'
-        });
-    };
-    
-    img.onerror = function() {
-        loader.style.display = 'none';
-        showMessage('Ошибка при создании облака слов', 'error');
-    };
-}
-
-// Удаление отдельного элемента
-function removeEntry(index) {
-    fetch('/remove-entry', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ index: index })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            showMessage('Ошибка при удалении слова', 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Ошибка сети', 'error');
-    });
-}
-
-// Подтверждение очистки
-function confirmClear() {
+// Очистка слов пользователя
+function clearUserWords() {
     if (confirm("Вы уверены, что хотите очистить ВАШ список слов?")) {
-        window.location.href = "{{ url_for('clear') }}";
+        window.location.href = "{{ url_for('clear_user_words') }}";
     }
-}
-
-// Показать сообщение
-function showMessage(text, type) {
-    const message = document.getElementById("message");
-    message.textContent = text;
-    message.className = `message ${type}`;
-    message.style.display = 'block';
-    
-    // Автоскрытие через 5 сек
-    setTimeout(() => {
-        message.style.display = 'none';
-    }, 5000);
 }
 </script>
 </body>
