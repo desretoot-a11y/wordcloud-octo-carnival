@@ -131,7 +131,7 @@ def global_cloud_image():
         return mask
 
     
-    russian_stopwords = get_stop_words('russian') | {
+    russian_stopwords = set(get_stop_words('russian')) | {
         'это', 'как', 'так', 'и', 'в', 'над', 'к', 'до', 'не', 'на', 'но', 'за', 'то', 'с', 'ли',
         'а', 'во', 'от', 'со', 'для', 'о', 'же', 'ну', 'вы', 'бы', 'что', 'кто', 'он', 'она'
     }
