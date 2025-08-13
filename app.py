@@ -126,9 +126,9 @@ def global_cloud_image():
         return "Нет слов для облака", 400
         
     def make_mask(width, height):
-        img = Image.new('L', (width, height), 0)
+        img = Image.new('L', (width, height), 255)
         draw = ImageDraw.Draw(img)
-        draw.ellipse([5,5, width-5, height-5], fill=255)
+        draw.ellipse([5,5, width-5, height-5], fill=0)
         return np.array(img)
 
     
@@ -158,7 +158,9 @@ def global_cloud_image():
         max_font_size=150,
         color_func=color_func,
         contour_width=0,  # Без контура для простоты
-        random_state=42  # Для воспроизводимости
+        random_state=42,  # Для воспроизводимости
+        scale=2,
+        relative_scaling=0.5,
     ).generate(text)
 
     img_io = io.BytesIO()
