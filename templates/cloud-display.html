@@ -45,25 +45,16 @@
             }
         }
         
-        // Динамический фон
-        function updateBackground() {
-            const hue = (Date.now() / 10000) % 360;
-            document.body.style.background = `
-                linear-gradient(135deg, 
-                hsl(${hue}, 30%, 95%), 
-                hsl(${(hue + 120) % 360}, 30%, 98%), 
-                hsl(${(hue + 240) % 360}, 30%, 95%)
-            `;
-        }
+
         
         // Автообновление каждые 30 секунд
         setInterval(refreshCloud, 30000);
         
         // Инициализация
-        window.onload = function() {
-            updateBackground();
-            setInterval(updateBackground, 10000);
-        };
+        setInterval(() => {
+            const img = document.getElementById('word-cloud');
+            img.src = `/global-cloud.png?${Date.now()}`;
+        }, 30000);
     </script>
 </body>
 </html>
