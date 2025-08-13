@@ -124,12 +124,12 @@ def global_cloud_image():
     all_words = global_storage.get_all_normalized_words()
     if not all_words:
         return "Нет слов для облака", 400
+        
     def make_mask(width, height):
-        mask = np.zeros((height, width), dtype=np.uint8)
-        img = Image.fromarray(mask)
+        img = Image.new('L', (width, height), 0)
         draw = ImageDraw.Draw(img)
-        draw.ellipse([0,0, width, height], fill=255)
-        return mask
+        draw.ellipse([5,5, width-5, height-5], fill=255)
+        return np.array(img)
 
     
     russian_stopwords = set(get_stop_words('russian')) | {
