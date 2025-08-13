@@ -30,6 +30,20 @@
     <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
+
+        if (!d3.layout || !d3.layout.cloud) {
+            console.error("d3.layout.cloud не доступен!");
+            // Загрузим отдельно
+            const cloudScript = document.createElement('script');
+            cloudScript.src = 'https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js';
+            document.head.appendChild(cloudScript);
+            
+            cloudScript.onload = () => {
+                console.log("d3.layout.cloud загружен");
+                loadWordCloud(); // Перезагружаем данные
+            };
+        }
+        
         // Инициализация частиц
         particlesJS("particles-js", {
             particles: {
@@ -91,6 +105,7 @@
 
         // Построение интерактивного облака
         function drawWordCloud(words) {
+            console.log("Начало построение облака слов..")
             const container = document.getElementById('word-cloud');
             const width = container.clientWidth;
             const height = container.clientHeight;
@@ -105,9 +120,18 @@
                 .attr("height", height)
                 .append("g")
                 .attr("transform", `translate(${width/2}, ${height/2})`);
+
+            // Проверка наличия данных
+            if (!words || words.length === 0) {
+                console.error("Нет данных для построения облака");
+                return;
+            }
             
             // Шкала для размеров слов
             const maxFreq = d3.max(words, d => d.size);
+            const minFreq = d3.min(words, d => d.size);
+            console.log('Min freq: ${minFreq}, Max freq: ${maxFreq}');
+            
             const sizeScale = d3.scaleLinear()
                 .domain([0, maxFreq])
                 .range([20, 100]);
@@ -122,9 +146,19 @@
                 .fontSize(d => sizeScale(d.size))
                 .on("end", draw);
             
-            layout.start();
-            
+            try {
+                layout.start();
+            } catch (e) {
+                console.error("Ошибка в d3.layout.cloud:", e);
+                showMessage("Ошибка генерации облака слов", "error");
+            }
+                    
             function draw(words) {
+                console.log("Рисование слов...");
+                if (!words || words.length === 0) {
+                    console.warn("Нет слов для отрисовки");
+                    return;
+                }
                 const word = svg.selectAll("text")
                     .data(words)
                     .enter().append("text")
@@ -168,6 +202,7 @@
                             .style("opacity", 1)
                             .on("end", () => d3.select(this).classed("pulse", false));
                     });
+                console.log(`Отрисовано ${words.length} слов`);
             }
         }
         
