@@ -3,6 +3,7 @@ import io
 import time
 import re
 import threading
+import numpy as np
 from collections import Counter
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, jsonify
