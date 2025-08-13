@@ -1,186 +1,31 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/d3-cloud/build/d3.layout.cloud.js"></script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Облако слов - Полный экран</title>
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/cloud-display.css') }}">
+    <title>Облако слов</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/cloud-display.css">
 </head>
 <body>
     <div class="title">
         <h1>Облако слов</h1>
         <p>Сгенерировано на основе введенных участниками слов</p>
     </div>
-    
+
     <div class="cloud-container">
-        <div id="word-cloud"></div>
-        <div id="particles-js"></div>
-        
-        <div class="controls">
-            <button class="btn refresh-btn" onclick="refreshCloud()">🔄 Обновить</button>
-            <button class="btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Полный экран</button>
-        </div>
-        
-        <div class="watermark">
-            Сгенерировано в реальном времени
-        </div>
+        <img id="word-cloud" src="/global-cloud.png?{{ ts }}" alt="Облако слов">
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <div class="controls">
+        <button class="btn refresh-btn" onclick="location.reload()">🔄 Обновить</button>
+        <button class="btn fullscreen-btn" onclick="toggleFullScreen()">⛶ Полный экран</button>
+    </div>
+
+    <div class="watermark">Сгенерировано в реальном времени</div>
+
     <script>
-
-        if (!d3.layout || !d3.layout.cloud) {
-            console.error("d3.layout.cloud не доступен!");
-            // Загрузим отдельно
-            const cloudScript = document.createElement('script');
-            cloudScript.src = 'https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js';
-            document.head.appendChild(cloudScript);
-            
-            cloudScript.onload = () => {
-                console.log("d3.layout.cloud загружен");
-                loadWordCloud(); // Перезагружаем данные
-            };
-        }
-        
-        // Инициализация частиц
-        particlesJS("particles-js", {
-            particles: {
-                number: { value: 40, density: { enable: true, value_area: 800 } },
-                color: { value: "#ffffff" },
-                opacity: { value: 0.1, random: true },
-                size: { value: 3, random: true },
-                line_linked: { enable: false },
-                move: {
-                    enable: true,
-                    speed: 1,
-                    direction: "none",
-                    random: true,
-                    straight: false,
-                    out_mode: "out",
-                    bounce: false
-                }
-            },
-            interactivity: { detect_on: "canvas", events: { onhover: { enable: false } } },
-            retina_detect: true
-        });
-        
-        // Элемент для подсказок
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
-
-        // Цветовая палитра
-        const colors = [
-            "#ff6b6b", "#4ecdc4", "#45b7d1", "#ffbe0b", 
-            "#fb5607", "#8338ec", "#3a86ff", "#ff006e"
-        ];
-
-        // Загрузка данных и построение облака
-        function loadWordCloud() {
-            console.log("Загрузка данных для облака слов...");
-            fetch('/word-frequencies')
-                .then(r => r.json())
-                .then(data => drawWordCloud(data));
-        }
-
-        // Построение интерактивного облака
-       function drawWordCloud(data) {
-        const container = document.getElementById('word-cloud');
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-
-        d3.select("#word-cloud").html("");
-
-        if (!data || data.length === 0) {
-            d3.select("#word-cloud")
-              .append("div")
-              .style("display","flex")
-              .style("align-items","center")
-              .style("justify-content","center")
-              .style("height", height + "px")
-              .style("opacity",0.7)
-              .style("font","600 28px Montserrat, sans-serif")
-              .text("Пока нет слов");
-            return;
-        }
-
-        const svg = d3.select("#word-cloud")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", `translate(${width/2}, ${height/2})`);
-
-        const maxFreq = d3.max(data, d => d.value) || 1;
-        const sizeScale = d3.scaleLinear()
-            .domain([1, maxFreq])
-            .range([20, 100]);
-
-        const layout = d3.layout.cloud()
-            .size([width, height])
-            .words(data.map(d => ({ text: d.text, value: d.value })))
-            .padding(5)
-            .rotate(() => (Math.random() > 0.7 ? 90 : 0))
-            .font("Montserrat")
-            .fontSize(d => sizeScale(d.value))
-            .on("end", draw);
-
-        layout.start();
-
-        function draw(words) {
-            svg.selectAll("text")
-                .data(words)
-                .enter().append("text")
-                .attr("text-anchor", "middle")
-                .attr("class", "word")
-                .style("font-family", "Montserrat, sans-serif")
-                .style("font-size", d => d.size + "px")        // d.size = реальный px от layout
-                .style("fill", (d, i) => colors[i % colors.length])
-                .attr("transform", d => `translate(${d.x}, ${d.y}) rotate(${d.rotate})`)
-                .text(d => d.text)
-                .on("mouseover", function(event, d) {
-                    d3.select(this).transition().duration(200)
-                        .style("font-size", (d.size * 1.2) + "px")
-                        .style("opacity", 1);
-
-                    tooltip.transition().duration(200).style("opacity", 0.9);
-                    tooltip.html(`<strong>${d.text}</strong><br>Частота: ${d.value}`)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                })
-                .on("mouseout", function(event, d) {
-                    d3.select(this).transition().duration(200)
-                        .style("font-size", d.size + "px");
-                    tooltip.transition().duration(300).style("opacity", 0);
-                })
-                .on("click", function() {
-                    d3.select(this).classed("pulse", true)
-                        .transition().duration(600).style("opacity", 0.6)
-                        .transition().duration(600).style("opacity", 1)
-                        .on("end", () => d3.select(this).classed("pulse", false));
-                });
-        }
-    }
-
-                
-
-        
-        // Обновление облака
-        function refreshCloud() {
-            loadWordCloud();
-        }
-        
-        // Переключение полноэкранного режима
-        function toggleFullscreen() {
+        function toggleFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
@@ -191,51 +36,12 @@
                 }
             }
         }
-        
-        // Динамический фон
-        function updateBackground() {
-            const hue = (Date.now() / 10000) % 360;
-            document.body.style.background = `
-                linear-gradient(135deg, 
-                hsl(${hue}, 70%, 20%), 
-                hsl(${(hue + 120) % 360}, 70%, 30%), 
-                hsl(${(hue + 240) % 360}, 70%, 20%)
-            `;
-        }
-        
-            // Показ сообщений об ошибках
-        function showMessage(text, type) {
-            const message = document.createElement("div");
-            message.className = `message ${type}`;
-            message.textContent = text;
-            message.style.position = "fixed";
-            message.style.top = "20px";
-            message.style.left = "50%";
-            message.style.transform = "translateX(-50%)";
-            message.style.zIndex = "1000";
-            document.body.appendChild(message);
-            
-            setTimeout(() => {
-                message.remove();
-            }, 5000);
-        }
-            
+
         // Автообновление каждые 30 секунд
-        setInterval(refreshCloud, 30000);
-        
-        // Инициализация
-        window.onload = function() {
-            console.log("Страница загружена");
-            loadWordCloud();
-            updateBackground();
-            setInterval(updateBackground, 10000);
-            
-            // Проверка загрузки D3.js
-            if (typeof d3 === 'undefined') {
-                console.error("D3.js не загружен!");
-                showMessage("Ошибка загрузки библиотеки D3.js", "error");
-            }
-        };
+        setInterval(() => {
+            const img = document.getElementById('word-cloud');
+            img.src = `/global-cloud.png?${Date.now()}`;
+        }, 30000);
     </script>
 </body>
 </html>
