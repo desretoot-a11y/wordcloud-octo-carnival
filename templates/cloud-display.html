@@ -3,29 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Облако слов</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/cloud-display.css">
+    <title>Облако слов - Полный экран</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cloud-display.css') }}">
 </head>
 <body>
     <div class="title">
         <h1>Облако слов</h1>
         <p>Сгенерировано на основе введенных участниками слов</p>
     </div>
-
+    
     <div class="cloud-container">
-        <img id="word-cloud" src="/global-cloud.png?{{ ts }}" alt="Облако слов">
+        <img id="word-cloud" src="{{ url_for('global_cloud_image') }}?ts={{ ts }}" alt="Облако слов">
+        
+        <div class="controls">
+            <button class="btn refresh-btn" onclick="refreshCloud()">🔄 Обновить</button>
+            <button class="btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Полный экран</button>
+        </div>
+        
+        <div class="watermark">
+            Сгенерировано в реальном времени
+        </div>
     </div>
-
-    <div class="controls">
-        <button class="btn refresh-btn" onclick="location.reload()">🔄 Обновить</button>
-        <button class="btn fullscreen-btn" onclick="toggleFullScreen()">⛶ Полный экран</button>
-    </div>
-
-    <div class="watermark">Сгенерировано в реальном времени</div>
 
     <script>
-        function toggleFullScreen() {
+        // Обновление облака
+        function refreshCloud() {
+            const img = document.getElementById("word-cloud");
+            img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
+        }
+        
+        // Переключение полноэкранного режима
+        function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
@@ -36,12 +44,26 @@
                 }
             }
         }
-
+        
+        // Динамический фон
+        function updateBackground() {
+            const hue = (Date.now() / 10000) % 360;
+            document.body.style.background = `
+                linear-gradient(135deg, 
+                hsl(${hue}, 30%, 95%), 
+                hsl(${(hue + 120) % 360}, 30%, 98%), 
+                hsl(${(hue + 240) % 360}, 30%, 95%)
+            `;
+        }
+        
         // Автообновление каждые 30 секунд
-        setInterval(() => {
-            const img = document.getElementById('word-cloud');
-            img.src = `/global-cloud.png?${Date.now()}`;
-        }, 30000);
+        setInterval(refreshCloud, 30000);
+        
+        // Инициализация
+        window.onload = function() {
+            updateBackground();
+            setInterval(updateBackground, 10000);
+        };
     </script>
 </body>
 </html>
