@@ -237,27 +237,24 @@
     <script>
         function removeWord(wordId) {
             if (confirm(`Удалить слово с ID ${wordId}?`)) {
-                const row = document.querySelector(`tr:has(td.word-id:contains("${wordId}"))`);
+                const row = document.querySelector(`tr[data-id="${wordId}"]`);
                 if (row) {
                     row.classList.add('removing');
-                    
+        
                     setTimeout(() => {
                         const formData = new FormData();
                         formData.append('word_id', wordId);
                         formData.append('password', '{{ request.args.get("password") }}');
-                        
-                        fetch('/admin/remove-word', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                row.remove();
-                            } else {
-                                row.classList.remove('removing');
-                                alert('Ошибка при удалении слова');
-                            }
-                        });
+        
+                        fetch('/admin/remove-word', { method: 'POST', body: formData })
+                          .then(response => {
+                              if (response.ok) {
+                                  row.remove();
+                              } else {
+                                  row.classList.remove('removing');
+                                  alert('Ошибка при удалении слова');
+                              }
+                          });
                     }, 300);
                 }
             }
