@@ -43,7 +43,9 @@ body {
 #word-cloud {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+    min-height: 500px; /* Добавляем минимальную высоту */
+    background: rgba(255, 255, 255, 0.05); /* Для визуализации */
+    border: 1px dashed rgba(255, 255, 255, 0.2); /* Для отладки */
 }
 
 .word {
