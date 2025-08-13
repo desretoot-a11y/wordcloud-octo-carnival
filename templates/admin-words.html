@@ -8,9 +8,7 @@
         :root {
             --primary: #3498db;
             --danger: #e74c3c;
-            --success: #2ecc71;
             --dark: #2c3e50;
-            --light: #ecf0f1;
         }
         
         body {
@@ -71,6 +69,23 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .search-bar input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .search-bar button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
         }
         
         .words-table {
@@ -87,6 +102,8 @@
             color: white;
             text-align: left;
             padding: 15px;
+            position: sticky;
+            top: 0;
         }
         
         .words-table td {
@@ -125,9 +142,10 @@
             color: white;
             border: none;
             border-radius: 4px;
-            padding: 6px 12px;
+            padding: 8px 15px;
             cursor: pointer;
             transition: background 0.3s;
+            font-weight: 600;
         }
         
         .remove-btn:hover {
@@ -152,23 +170,14 @@
             font-size: 0.8rem;
             color: #95a5a6;
         }
+        
         .words-table tr {
-            transition: all 0.3s ease;
-        }    
-
+            transition: all 0.4s ease;
+        }
+        
         .words-table tr.removing {
             transform: translateX(100%);
             opacity: 0;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
         }
     </style>
 </head>
@@ -180,7 +189,7 @@
         <div class="admin-nav">
             <a href="{{ url_for('admin_panel', password=request.args.get('password')) }}">Облако</a>
             <a href="{{ url_for('admin_words_panel', password=request.args.get('password')) }}" class="active">Слова</a>
-            <a href="{{ url_for('admin_panel', password=request.args.get('password')) }}">Статистика</a>
+            <a href="{{ url_for('display_fullscreen') }}" target="_blank">Полный экран</a>
         </div>
     </div>
     
@@ -226,40 +235,41 @@
     </table>
 
     <script>
-        // Удаление слова администратором
         function removeWord(wordId) {
             if (confirm(`Удалить слово с ID ${wordId}?`)) {
-                const row = document.querySelector(`tr:has(td.word-id:contains("${wordId}")`);
-                
-                // Анимация удаления
-                row.classList.add('removing');
-                
-                setTimeout(() => {
-                    fetch('/admin/remove-word', {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            'word_id': wordId,
-                            'password': '{{ request.args.get("password") }}'
+                const row = document.querySelector(`tr:has(td.word-id:contains("${wordId}"))`);
+                if (row) {
+                    row.classList.add('removing');
+                    
+                    setTimeout(() => {
+                        const formData = new FormData();
+                        formData.append('word_id', wordId);
+                        formData.append('password', '{{ request.args.get("password") }}');
+                        
+                        fetch('/admin/remove-word', {
+                            method: 'POST',
+                            body: formData
                         })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            row.remove();
-                        } else {
-                            row.classList.remove('removing');
-                            alert('Ошибка при удалении слова');
-                        }
-                    });
-                }, 300);
+                        .then(response => {
+                            if (response.ok) {
+                                row.remove();
+                            } else {
+                                row.classList.remove('removing');
+                                alert('Ошибка при удалении слова');
+                            }
+                        });
+                    }, 300);
+                }
             }
         }
         
-        // Фильтрация слов
         function filterWords() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const rows = document.querySelectorAll('#wordsTableBody tr');
             
             rows.forEach(row => {
+                if (row.classList.contains('no-words')) return;
+                
                 const wordRaw = row.querySelector('.word-raw').textContent.toLowerCase();
                 const wordNormalized = row.querySelector('.word-normalized').textContent.toLowerCase();
                 
@@ -271,7 +281,6 @@
             });
         }
         
-        // Инициализация
         document.getElementById('searchInput').addEventListener('keyup', filterWords);
     </script>
 </body>
