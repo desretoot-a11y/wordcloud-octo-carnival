@@ -151,7 +151,7 @@ def word_frequencies():
         return jsonify([])
     
     word_counts = Counter(all_words)
-    words_data = [{"text": word, "size": count} for word, count in word_counts.items()]
+    words_data = [{"text": word, "value": count} for word, count in word_counts.items()]
     return jsonify(words_data)
 
 @app.route("/remove-word", methods=["POST"])
