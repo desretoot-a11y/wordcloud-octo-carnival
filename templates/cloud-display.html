@@ -5,180 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Облако слов - Полный экран</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-        }
-        
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .cloud-container {
-            width: 90vw;
-            height: 80vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-        
-        #cloud {
-            max-width: 100%;
-            max-height: 100%;
-            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-        }
-        
-        .title {
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-        }
-        
-        .title h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-        
-        .title p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-        
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-3px);
-        }
-        
-        .refresh-btn {
-            background: rgba(46, 204, 113, 0.3);
-        }
-        
-        .fullscreen-btn {
-            background: rgba(52, 152, 219, 0.3);
-        }
-        
-        .watermark {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            opacity: 0.5;
-            font-size: 0.9rem;
-        }
-                .cloud-container {
-            width: 95vw;
-            height: 85vh;
-            position: relative;
-        }
-        
-        #word-cloud {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .word {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .word:hover {
-            opacity: 0.9;
-            transform: scale(1.05);
-        }
-        
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 10;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .word {
-            transition: 
-                transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                opacity 0.3s ease;
-        }
-        
-        /* Анимация появления слов */
-        @keyframes word-appear {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .word {
-            animation: word-appear 0.6s ease-out;
-            animation-fill-mode: both;
-        }
-        
-        @media (max-width: 768px) {
-            .title h1 {
-                font-size: 2.5rem;
-            }
-            
-            .title p {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cloud-display.css') }}">
 </head>
 <body>
     <div class="title">
@@ -188,6 +15,7 @@
     
     <div class="cloud-container">
         <div id="word-cloud"></div>
+        <div id="particles-js"></div>
         
         <div class="controls">
             <button class="btn refresh-btn" onclick="refreshCloud()">🔄 Обновить</button>
@@ -199,14 +27,36 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
-        <script>
+        // Инициализация частиц
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 40, density: { enable: true, value_area: 800 } },
+                color: { value: "#ffffff" },
+                opacity: { value: 0.1, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: false },
+                move: {
+                    enable: true,
+                    speed: 1,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false
+                }
+            },
+            interactivity: { detect_on: "canvas", events: { onhover: { enable: false } } },
+            retina_detect: true
+        });
+        
         // Элемент для подсказок
         const tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
 
-        // Цветовая палитра в стиле DiaClass
+        // Цветовая палитра
         const colors = [
             "#ff6b6b", "#4ecdc4", "#45b7d1", "#ffbe0b", 
             "#fb5607", "#8338ec", "#3a86ff", "#ff006e"
@@ -249,7 +99,7 @@
                 .size([width, height])
                 .words(words)
                 .padding(5)
-                .rotate(() => (Math.random() > 0.5 ? 0 : 90))
+                .rotate(() => (Math.random() > 0.7 ? 90 : 0))
                 .font("Montserrat")
                 .fontSize(d => sizeScale(d.size))
                 .on("end", draw);
@@ -268,13 +118,11 @@
                     .attr("transform", d => `translate(${d.x}, ${d.y})rotate(${d.rotate})`)
                     .text(d => d.text)
                     .on("mouseover", function(event, d) {
-                        // Анимация при наведении
                         d3.select(this).transition()
                             .duration(200)
                             .style("font-size", `${d.size * 1.2}px`)
                             .style("opacity", 1);
                         
-                        // Показываем подсказку
                         tooltip.transition()
                             .duration(200)
                             .style("opacity", 0.9);
@@ -283,25 +131,24 @@
                             .style("top", (event.pageY - 28) + "px");
                     })
                     .on("mouseout", function(d) {
-                        // Возвращаем исходный размер
                         d3.select(this).transition()
                             .duration(200)
                             .style("font-size", `${d.size}px`);
                         
-                        // Скрываем подсказку
                         tooltip.transition()
                             .duration(500)
                             .style("opacity", 0);
                     })
-                    .on("click", d => {
-                        // Пульсирующая анимация при клике
+                    .on("click", function() {
                         d3.select(this)
+                            .classed("pulse", true)
                             .transition()
-                            .duration(200)
-                            .style("opacity", 0.5)
+                            .duration(600)
+                            .style("opacity", 0.6)
                             .transition()
-                            .duration(200)
-                            .style("opacity", 1);
+                            .duration(600)
+                            .style("opacity", 1)
+                            .on("end", () => d3.select(this).classed("pulse", false));
                     });
             }
         }
@@ -310,23 +157,21 @@
         function refreshCloud() {
             loadWordCloud();
         }
-        // // Обновление облака
-        // function refreshCloud() {
-        //     const img = document.getElementById("cloud");
-        //     img.src = "{{ url_for('global_cloud_image') }}?ts=" + Date.now();
-        // }
         
         // Переключение полноэкранного режима
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
+                });
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 }
             }
         }
-        // В cloud-display.html
+        
+        // Динамический фон
         function updateBackground() {
             const hue = (Date.now() / 10000) % 360;
             document.body.style.background = `
@@ -337,13 +182,15 @@
             `;
         }
         
-        // Обновляем фон каждые 10 секунд
-        setInterval(updateBackground, 10000);
-        updateBackground();
-        
         // Автообновление каждые 30 секунд
         setInterval(refreshCloud, 30000);
-        loadWordCloud();
+        
+        // Инициализация
+        window.onload = function() {
+            loadWordCloud();
+            updateBackground();
+            setInterval(updateBackground, 10000);
+        };
     </script>
 </body>
 </html>
