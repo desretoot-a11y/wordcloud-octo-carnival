@@ -8,7 +8,9 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, jsonify
 from wordcloud import WordCloud, STOPWORDS
 import pymorphy3
+from PIL import Image, ImageDraw
 import random
+from stop_words import get_stop_words
 import matplotlib.colors as mcolors
 
 # Инициализация Flask
@@ -121,8 +123,15 @@ def global_cloud_image():
     all_words = global_storage.get_all_normalized_words()
     if not all_words:
         return "Нет слов для облака", 400
+    def make_mask(width, height):
+        mask = np.zeros((height, width), dtype=np.uint8)
+        img = Image.fromarray(mask)
+        draw = ImageDraw.Draw(img)
+        draw.ellipse([0,0, width, height], fill=255)
+        return mask
+
     
-    russian_stopwords = set(STOPWORDS) | {
+    russian_stopwords = get_stop_words('russian') | {
         'это', 'как', 'так', 'и', 'в', 'над', 'к', 'до', 'не', 'на', 'но', 'за', 'то', 'с', 'ли',
         'а', 'во', 'от', 'со', 'для', 'о', 'же', 'ну', 'вы', 'бы', 'что', 'кто', 'он', 'она'
     }
@@ -136,11 +145,12 @@ def global_cloud_image():
     
     text = " ".join(all_words)
     wc = WordCloud(
-        width=1200,
-        height=600,
+        width=1400,
+        height=800,
         background_color="#f0f8ff",  # Светло-голубой фон как на картинке
         collocations=False,
         stopwords=russian_stopwords,
+        mask=make_mask(1400, 800)
         max_words=200,
         prefer_horizontal=0.7,  # Чуть больше вертикальных слов
         min_font_size=10,
