@@ -1,226 +1,231 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Добавьте слова в общее облако</title>
-<style>
-:root {
-    --primary: #3498db;
-    --light: #f8f9fa;
-    --dark: #343a40;
-}
-
-body { 
-    font-family: 'Segoe UI', Tahoma, sans-serif; 
-    background: #f0f2f5; 
-    color: #333;
-    line-height: 1.6;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-h1 {
-    color: #2c3e50;
-    margin-bottom: 10px;
-}
-
-.card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin-bottom: 20px;
-}
-
-form { 
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-input[type=text] { 
-    flex: 1;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 16px;
-    transition: border 0.3s;
-}
-
-input[type=text]:focus {
-    border-color: var(--primary);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-}
-
-button {
-    padding: 12px 20px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-button:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-}
-
-.entries-container {
-    margin: 25px 0;
-}
-
-.entries-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.entries-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.entries-count {
-    background: var(--primary);
-    color: white;
-    border-radius: 12px;
-    padding: 2px 10px;
-    font-size: 0.9rem;
-}
-
-.entries {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: left;
-}
-
-.entry-item {
-    padding: 8px 0;
-    border-bottom: 1px solid #f1f1f1;
-}
-
-.entries:empty::before {
-    content: "Вы пока не добавили слов";
-    display: block;
-    text-align: center;
-    color: #95a5a6;
-    font-style: italic;
-    padding: 20px;
-}
-
-.controls {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.btn-clear {
-    background: #e74c3c;
-}
-
-@media (max-width: 600px) {
-    form {
-        flex-direction: column;
-    }
-}
-.entry-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #f1f1f1;
-}
-
-.remove-word-btn {
-    color: #e74c3c;
-    cursor: pointer;
-    margin-left: 10px;
-    font-weight: bold;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавьте слова в общее облако</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        input[type=text] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input[type=text]:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .entries-container {
+            margin: 25px 0;
+        }
+        
+        .entries-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .entries-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .entries-count {
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.9rem;
+        }
+        
+        .entries {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .remove-word-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .remove-word-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        .entries:empty::before {
+            content: "Вы пока не добавили слов";
+            display: block;
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .btn-clear {
+            background: #e74c3c;
+        }
+        
+        @media (max-width: 600px) {
+            form {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-    <h1>Добавьте слова в общее облако</h1>
-    <p>Ваши слова будут видны только вам. Общее облако сформируется из всех добавленных слов.</p>
-</header>
-
-<main>
-    <div class="card">
-        <form method="POST">
-            <input type="text" name="text" placeholder="Введите слово или фразу" required>
-            <button type="submit">Добавить</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <div class="entries">
-            {% for word in user_words %}
-                <div class="entry-item">
-                    <span>{{ word }}</span>
-                    <span class="remove-word-btn" onclick="removeWord('{{ word }}')">✕</span>
-                </div>
-            {% else %}
-                <div style="text-align: center; color: #95a5a6; font-style: italic; padding: 20px;">
-                    Вы пока не добавили слов
-                </div>
-            {% endfor %}
+    <header>
+        <h1>Добавьте слова в общее облако</h1>
+        <p>Ваши слова будут видны только вам. Общее облако сформируется из всех добавленных слов.</p>
+    </header>
+    
+    <main>
+        <div class="card">
+            <form method="POST">
+                <input type="text" name="text" placeholder="Введите слово или фразу" required>
+                <button type="submit">Добавить</button>
+            </form>
         </div>
         
-        <div class="controls">
-            <button class="btn-clear" onclick="clearUserWords()">❌ Очистить мои слова</button>
+        <div class="card">
+            <div class="entries-container">
+                <div class="entries-header">
+                    <div class="entries-title">Ваши слова</div>
+                    <div class="entries-count">{{ user_words|length }} слов</div>
+                </div>
+                <div class="entries">
+                    {% for word in user_words %}
+                        <div class="entry-item">
+                            <span>{{ word }}</span>
+                            <span class="remove-word-btn" onclick="removeWord('{{ word }}')">✕</span>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; color: #95a5a6; font-style: italic; padding: 20px;">
+                            Вы пока не добавили слов
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn-clear" onclick="clearUserWords()">❌ Очистить мои слова</button>
+            </div>
         </div>
-    </div>
-</main>
-
-<script>
-// Фокус на поле ввода при загрузке
-window.onload = function() {
-    document.querySelector('input[name="text"]').focus();
-};
-
-// Очистка слов пользователя
-function clearUserWords() {
-    if (confirm("Вы уверены, что хотите очистить ВАШ список слов?")) {
-        window.location.href = "{{ url_for('clear_user_words') }}";
-    }
-};
-function removeWord(word) {
-    if (confirm(`Удалить слово "${word}"?`)) {
-        fetch('/remove-word', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `word=${encodeURIComponent(word)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Ошибка при удалении слова');
+    </main>
+    
+    <script>
+        window.onload = function() {
+            document.querySelector('input[name="text"]').focus();
+        };
+        
+        function removeWord(word) {
+            if (confirm(`Удалить слово "${word}"?`)) {
+                fetch('/remove-word', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `word=${encodeURIComponent(word)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Ошибка при удалении слова');
+                    }
+                });
             }
-        });
-    }
-}
-</script>
+        }
+        
+        function clearUserWords() {
+            if (confirm("Вы уверены, что хотите очистить ВАШ список слов?")) {
+                window.location.href = "{{ url_for('clear_user_words') }}";
+            }
+        }
+    </script>
 </body>
 </html>
