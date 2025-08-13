@@ -4,3 +4,4 @@ wordcloud
 matplotlib
 pillow
 pymorphy3
+numpy
