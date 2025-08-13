@@ -3,282 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель - Управление словами</title>
+    <title>Управление словами</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #3498db;
-            --danger: #e74c3c;
-            --dark: #2c3e50;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
             padding: 20px;
         }
-        
-        .admin-header {
-            background: var(--dark);
-            color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        
-        .admin-header h1 {
-            margin-bottom: 10px;
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
             font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
         }
-        
-        .admin-nav {
+        p.subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        .nav-tabs {
             display: flex;
-            gap: 15px;
-            margin-top: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
         }
-        
-        .admin-nav a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            background: rgba(255,255,255,0.1);
-            transition: background 0.3s;
+        .nav-tab {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            color: #7f8c8d;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
         }
-        
-        .admin-nav a:hover {
-            background: rgba(255,255,255,0.2);
+        .nav-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
         }
-        
-        .admin-nav a.active {
-            background: var(--primary);
-            font-weight: bold;
-        }
-        
-        .search-bar {
-            display: flex;
+        .search-container {
             margin-bottom: 20px;
-            gap: 10px;
+            display: flex;
+            justify-content: center;
         }
-        
-        .search-bar input {
-            flex: 1;
+        .search-input {
             padding: 12px 15px;
             border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border 0.3s;
-        }
-        
-        .search-bar input:focus {
-            border-color: var(--primary);
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 500px;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
-        
-        .search-bar button {
-            padding: 12px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
+        .search-input:focus {
+            border-color: #3498db;
         }
-        
         .words-table {
             width: 100%;
             border-collapse: collapse;
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
         .words-table th {
-            background: var(--primary);
+            background-color: #3498db;
             color: white;
-            text-align: left;
             padding: 15px;
-            position: sticky;
-            top: 0;
+            text-align: left;
         }
-        
         .words-table td {
             padding: 12px 15px;
             border-bottom: 1px solid #eee;
         }
-        
-        .words-table tr:nth-child(even) {
-            background: #f9f9f9;
+        .words-table tr:last-child td {
+            border-bottom: none;
         }
-        
         .words-table tr:hover {
-            background: #f1f7ff;
+            background-color: #f8f9fa;
         }
-        
-        .word-id {
-            font-weight: bold;
-            color: #7f8c8d;
-        }
-        
-        .word-raw {
-            font-weight: 500;
-        }
-        
-        .word-normalized {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        .action-cell {
-            text-align: center;
-        }
-        
-        .remove-btn {
-            background: var(--danger);
+        .btn {
+            padding: 8px 12px;
+            background-color: #e74c3c;
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
+            font-size: 0.9rem;
             font-weight: 600;
+            transition: background-color 0.3s;
         }
-        
-        .remove-btn:hover {
-            background: #c0392b;
+        .btn:hover {
+            background-color: #c0392b;
         }
-        
-        .no-words {
+        .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #95a5a6;
-            font-style: italic;
-        }
-        
-        .user-id {
-            font-size: 0.85rem;
+            padding: 50px 0;
             color: #7f8c8d;
-            word-break: break-all;
-            max-width: 150px;
         }
-        
-        .timestamp {
-            font-size: 0.8rem;
-            color: #95a5a6;
-        }
-        
-        .words-table tr {
-            transition: all 0.4s ease;
-        }
-        
-        .words-table tr.removing {
-            transform: translateX(100%);
-            opacity: 0;
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .words-table {
+                display: block;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="admin-header">
-        <h1>Управление словами</h1>
-        <p>Просматривайте и удаляйте слова, добавленные участниками</p>
-        
-        <div class="admin-nav">
-            <a href="{{ url_for('admin_panel', password=request.args.get('password')) }}">Облако</a>
-            <a href="{{ url_for('admin_words_panel', password=request.args.get('password')) }}" class="active">Слова</a>
-            <a href="{{ url_for('display_fullscreen') }}" target="_blank">Полный экран</a>
+    <div class="container">
+        <header>
+            <h1>Управление словами</h1>
+            <p class="subtitle">Просматривайте и удаляйте слова, добавленные участниками</p>
+        </header>
+
+        <div class="nav-tabs">
+            <a href="/admin?password={{ request.args.get('password') }}" class="nav-tab">Облако</a>
+            <a href="/admin/words?password={{ request.args.get('password') }}" class="nav-tab active">Слова</a>
+            <a href="/display" class="nav-tab">Полный экран</a>
         </div>
-    </div>
-    
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Поиск по словам...">
-        <button onclick="filterWords()">🔍 Поиск</button>
-    </div>
-    
-    <table class="words-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Слово</th>
-                <th>Нормализованное</th>
-                <th>Пользователь</th>
-                <th>Время</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody id="wordsTableBody">
-            {% if all_words %}
-                {% for word in all_words %}
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="🔍 Поиск" id="searchInput">
+        </div>
+
+        <table class="words-table">
+            <thead>
                 <tr>
-                    <td class="word-id">{{ word.id }}</td>
-                    <td>
-                        <div class="word-raw">{{ word.raw }}</div>
-                        <div class="word-normalized">{{ word.normalized }}</div>
-                    </td>
-                    <td>{{ word.normalized }}</td>
-                    <td class="user-id">{{ word.user_id }}</td>
-                    <td class="timestamp">{{ word.timestamp|datetime }}</td>
-                    <td class="action-cell">
-                        <button class="remove-btn" onclick="removeWord({{ word.id }})">Удалить</button>
-                    </td>
+                    <th>ID</th>
+                    <th>Слово</th>
+                    <th>Нормализованное</th>
+                    <th>Пользователь</th>
+                    <th>Время</th>
+                    <th>Действия</th>
                 </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="6" class="no-words">Нет добавленных слов</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody id="wordsTableBody">
+                {% if all_words %}
+                    {% for word in all_words %}
+                        <tr>
+                            <td>{{ word.id }}</td>
+                            <td>
+                                <strong>{{ word.raw }}</strong><br>
+                                <small>{{ word.normalized }}</small>
+                            </td>
+                            <td>{{ word.normalized }}</td>
+                            <td>{{ word.user_id }}</td>
+                            <td>{{ word.timestamp|datetime }}</td>
+                            <td>
+                                <button class="btn" onclick="removeWord('{{ word.id }}')">Удалить</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">Нет добавленных слов</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 
     <script>
         function removeWord(wordId) {
-            if (confirm(`Удалить слово с ID ${wordId}?`)) {
-                const row = document.querySelector(`tr[data-id="${wordId}"]`);
-                if (row) {
-                    row.classList.add('removing');
-        
-                    setTimeout(() => {
-                        const formData = new FormData();
-                        formData.append('word_id', wordId);
-                        formData.append('password', '{{ request.args.get("password") }}');
-        
-                        fetch('/admin/remove-word', { method: 'POST', body: formData })
-                          .then(response => {
-                              if (response.ok) {
-                                  row.remove();
-                              } else {
-                                  row.classList.remove('removing');
-                                  alert('Ошибка при удалении слова');
-                              }
-                          });
-                    }, 300);
-                }
+            if (confirm('Вы уверены, что хотите удалить это слово?')) {
+                const formData = new FormData();
+                formData.append('word_id', wordId);
+                formData.append('password', '{{ request.args.get("password") }}');
+
+                fetch('/admin/remove-word', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
             }
         }
-        
-        function filterWords() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+        // Поиск по таблице
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
             const rows = document.querySelectorAll('#wordsTableBody tr');
             
             rows.forEach(row => {
-                if (row.classList.contains('no-words')) return;
-                
-                const wordRaw = row.querySelector('.word-raw').textContent.toLowerCase();
-                const wordNormalized = row.querySelector('.word-normalized').textContent.toLowerCase();
-                
-                if (wordRaw.includes(searchTerm) || wordNormalized.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(searchText) ? '' : 'none';
             });
-        }
-        
-        document.getElementById('searchInput').addEventListener('keyup', filterWords);
+        });
     </script>
 </body>
 </html>
