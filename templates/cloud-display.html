@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-cloud/build/d3.layout.cloud.js"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Облако слов - Полный экран</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cloud-display.css') }}">
 </head>
 <body>
@@ -81,130 +88,91 @@
         function loadWordCloud() {
             console.log("Загрузка данных для облака слов...");
             fetch('/word-frequencies')
-                .then(response => {
-                    console.log("Статус ответа:", response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Получены данные:", data);
-                    if (data.length === 0) {
-                        console.warn("Нет данных для построения облака слов");
-                        showMessage("Нет данных для построения облака", "error");
-                        return;
-                    }
-                    drawWordCloud(data);
-                })
-                .catch(error => {
-                    console.error("Ошибка при загрузке данных:", error);
-                    showMessage("Ошибка загрузки данных для облака", "error");
-                });
+                .then(r => r.json())
+                .then(data => drawWordCloud(data));
         }
 
         // Построение интерактивного облака
-        function drawWordCloud(words) {
-            console.log("Начало построение облака слов..")
-            const container = document.getElementById('word-cloud');
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            
-            // Очищаем предыдущее облако
-            d3.select("#word-cloud").html("");
-            
-            // Создаем SVG контейнер
-            const svg = d3.select("#word-cloud")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", `translate(${width/2}, ${height/2})`);
+       function drawWordCloud(data) {
+        const container = document.getElementById('word-cloud');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
 
-            // Проверка наличия данных
-            if (!words || words.length === 0) {
-                console.error("Нет данных для построения облака");
-                return;
-            }
-            
-            // Шкала для размеров слов
-            const maxFreq = d3.max(words, d => d.size);
-            const minFreq = d3.min(words, d => d.size);
-            console.log('Min freq: ${minFreq}, Max freq: ${maxFreq}');
-            
-            const sizeScale = d3.scaleLinear()
-                .domain([0, maxFreq])
-                .range([20, 100]);
-            
-            // Генерация облака
-            const layout = d3.layout.cloud()
-                .size([width, height])
-                .words(words)
-                .padding(5)
-                .rotate(() => (Math.random() > 0.7 ? 90 : 0))
-                .font("Montserrat")
-                .fontSize(d => sizeScale(d.size))
-                .on("end", draw);
-            
-            try {
-                layout.start();
-            } catch (e) {
-                console.error("Ошибка в d3.layout.cloud:", e);
-                showMessage("Ошибка генерации облака слов", "error");
-            }
-                    
-            function draw(words) {
-                console.log("Рисование слов...");
-                if (!words || words.length === 0) {
-                    console.warn("Нет слов для отрисовки");
-                    return;
-                }
-                const word = svg.selectAll("text")
-                    .data(words)
-                    .enter().append("text")
-                    .style("font-size", d => `${d.size}px`)
-                    .style("font-family", "Montserrat, sans-serif")
-                    .style("fill", (d, i) => colors[i % colors.length])
-                    .attr("text-anchor", "middle")
-                    .attr("class", "word")
-                    .attr("transform", d => `translate(${d.x}, ${d.y})rotate(${d.rotate})`)
-                    .text(d => d.text)
-                    .on("mouseover", function(event, d) {
-                        d3.select(this).transition()
-                            .duration(200)
-                            .style("font-size", `${d.size * 1.2}px`)
-                            .style("opacity", 1);
-                        
-                        tooltip.transition()
-                            .duration(200)
-                            .style("opacity", 0.9);
-                        tooltip.html(`<strong>${d.text}</strong><br>Частота: ${d.size}`)
-                            .style("left", (event.pageX + 10) + "px")
-                            .style("top", (event.pageY - 28) + "px");
-                    })
-                    .on("mouseout", function(d) {
-                        d3.select(this).transition()
-                            .duration(200)
-                            .style("font-size", `${d.size}px`);
-                        
-                        tooltip.transition()
-                            .duration(500)
-                            .style("opacity", 0);
-                    })
-                    .on("click", function() {
-                        d3.select(this)
-                            .classed("pulse", true)
-                            .transition()
-                            .duration(600)
-                            .style("opacity", 0.6)
-                            .transition()
-                            .duration(600)
-                            .style("opacity", 1)
-                            .on("end", () => d3.select(this).classed("pulse", false));
-                    });
-                console.log(`Отрисовано ${words.length} слов`);
-            }
+        d3.select("#word-cloud").html("");
+
+        if (!data || data.length === 0) {
+            d3.select("#word-cloud")
+              .append("div")
+              .style("display","flex")
+              .style("align-items","center")
+              .style("justify-content","center")
+              .style("height", height + "px")
+              .style("opacity",0.7)
+              .style("font","600 28px Montserrat, sans-serif")
+              .text("Пока нет слов");
+            return;
         }
+
+        const svg = d3.select("#word-cloud")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", `translate(${width/2}, ${height/2})`);
+
+        const maxFreq = d3.max(data, d => d.value) || 1;
+        const sizeScale = d3.scaleLinear()
+            .domain([1, maxFreq])
+            .range([20, 100]);
+
+        const layout = d3.layout.cloud()
+            .size([width, height])
+            .words(data.map(d => ({ text: d.text, value: d.value })))
+            .padding(5)
+            .rotate(() => (Math.random() > 0.7 ? 90 : 0))
+            .font("Montserrat")
+            .fontSize(d => sizeScale(d.value))
+            .on("end", draw);
+
+        layout.start();
+
+        function draw(words) {
+            svg.selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .attr("text-anchor", "middle")
+                .attr("class", "word")
+                .style("font-family", "Montserrat, sans-serif")
+                .style("font-size", d => d.size + "px")        // d.size = реальный px от layout
+                .style("fill", (d, i) => colors[i % colors.length])
+                .attr("transform", d => `translate(${d.x}, ${d.y}) rotate(${d.rotate})`)
+                .text(d => d.text)
+                .on("mouseover", function(event, d) {
+                    d3.select(this).transition().duration(200)
+                        .style("font-size", (d.size * 1.2) + "px")
+                        .style("opacity", 1);
+
+                    tooltip.transition().duration(200).style("opacity", 0.9);
+                    tooltip.html(`<strong>${d.text}</strong><br>Частота: ${d.value}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select(this).transition().duration(200)
+                        .style("font-size", d.size + "px");
+                    tooltip.transition().duration(300).style("opacity", 0);
+                })
+                .on("click", function() {
+                    d3.select(this).classed("pulse", true)
+                        .transition().duration(600).style("opacity", 0.6)
+                        .transition().duration(600).style("opacity", 1)
+                        .on("end", () => d3.select(this).classed("pulse", false));
+                });
+        }
+    }
+
+                
+
         
         // Обновление облака
         function refreshCloud() {
