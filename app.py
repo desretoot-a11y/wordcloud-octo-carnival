@@ -150,7 +150,7 @@ def global_cloud_image():
         background_color="#f0f8ff",  # Светло-голубой фон как на картинке
         collocations=False,
         stopwords=russian_stopwords,
-        mask=make_mask(1400, 800)
+        mask=make_mask(1400, 800),
         max_words=200,
         prefer_horizontal=0.7,  # Чуть больше вертикальных слов
         min_font_size=10,
