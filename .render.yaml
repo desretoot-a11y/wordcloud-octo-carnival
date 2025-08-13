@@ -3,7 +3,10 @@ services:
     name: word-cloud-app
     env: python
     pythonVersion: "3.12.3"
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: |
+      pip install -U pip
+      pip install -r requirements.txt
+      python -c "import pymorphy3; pymorphy3.download_dicts()"
     startCommand: "gunicorn app:app"
     envVars:
       - key: SECRET_KEY
