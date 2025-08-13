@@ -8,6 +8,8 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, jsonify
 from wordcloud import WordCloud, STOPWORDS
 import pymorphy3
+import random
+import matplotlib.colors as mcolors
 
 # Инициализация Flask
 app = Flask(__name__)
@@ -125,18 +127,27 @@ def global_cloud_image():
         'а', 'во', 'от', 'со', 'для', 'о', 'же', 'ну', 'вы', 'бы', 'что', 'кто', 'он', 'она'
     }
     
+    # Функция для градиентных цветов как на картинке (от зеленого к фиолетовому/голубому)
+    def color_func(word, font_size, position, orientation, random_state=None, **kwargs):
+        hue = random.randint(30, 270)  # От желто-зеленого до фиолетового
+        saturation = random.randint(50, 100)
+        lightness = random.randint(30, 70)
+        return f"hsl({hue}, {saturation}%, {lightness}%)"
+    
     text = " ".join(all_words)
     wc = WordCloud(
         width=1200,
         height=600,
-        background_color="white",
+        background_color="#f0f8ff",  # Светло-голубой фон как на картинке
         collocations=False,
         stopwords=russian_stopwords,
         max_words=200,
-        prefer_horizontal=0.9,
+        prefer_horizontal=0.7,  # Чуть больше вертикальных слов
         min_font_size=10,
-        contour_width=3,
-        contour_color='steelblue'
+        max_font_size=150,
+        color_func=color_func,
+        contour_width=0,  # Без контура для простоты
+        random_state=42  # Для воспроизводимости
     ).generate(text)
 
     img_io = io.BytesIO()
@@ -151,7 +162,7 @@ def word_frequencies():
         return jsonify([])
     
     word_counts = Counter(all_words)
-    words_data = [{"text": word, "value": count} for word, count in word_counts.items()]
+    words_data = [{"text": word, "size": count} for word, count in word_counts.items()]
     return jsonify(words_data)
 
 @app.route("/remove-word", methods=["POST"])
