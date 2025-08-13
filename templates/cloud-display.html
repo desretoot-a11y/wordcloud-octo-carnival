@@ -64,10 +64,27 @@
 
         // Загрузка данных и построение облака
         function loadWordCloud() {
+            console.log("Загрузка данных для облака слов...");
             fetch('/word-frequencies')
-                .then(response => response.json())
+                .then(response => {
+                    console.log("Статус ответа:", response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log("Получены данные:", data);
+                    if (data.length === 0) {
+                        console.warn("Нет данных для построения облака слов");
+                        showMessage("Нет данных для построения облака", "error");
+                        return;
+                    }
                     drawWordCloud(data);
+                })
+                .catch(error => {
+                    console.error("Ошибка при загрузке данных:", error);
+                    showMessage("Ошибка загрузки данных для облака", "error");
                 });
         }
 
@@ -182,14 +199,38 @@
             `;
         }
         
+            // Показ сообщений об ошибках
+        function showMessage(text, type) {
+            const message = document.createElement("div");
+            message.className = `message ${type}`;
+            message.textContent = text;
+            message.style.position = "fixed";
+            message.style.top = "20px";
+            message.style.left = "50%";
+            message.style.transform = "translateX(-50%)";
+            message.style.zIndex = "1000";
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                message.remove();
+            }, 5000);
+        }
+            
         // Автообновление каждые 30 секунд
         setInterval(refreshCloud, 30000);
         
         // Инициализация
         window.onload = function() {
+            console.log("Страница загружена");
             loadWordCloud();
             updateBackground();
             setInterval(updateBackground, 10000);
+            
+            // Проверка загрузки D3.js
+            if (typeof d3 === 'undefined') {
+                console.error("D3.js не загружен!");
+                showMessage("Ошибка загрузки библиотеки D3.js", "error");
+            }
         };
     </script>
 </body>
