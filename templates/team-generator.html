@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор команд</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .people-list {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .people-list h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .people-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .person-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .person-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .person-card.selected {
+            background: #667eea;
+            color: white;
+            border-color: #5a67d8;
+        }
+        
+        .teams-container {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .team-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .team-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .team-members {
+            flex: 1;
+        }
+        
+        .team-member {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 8px 0;
+            text-align: center;
+            animation: fadeInUp 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .team-member:nth-child(1) { animation-delay: 0.1s; }
+        .team-member:nth-child(2) { animation-delay: 0.2s; }
+        .team-member:nth-child(3) { animation-delay: 0.3s; }
+        .team-member:nth-child(4) { animation-delay: 0.4s; }
+        .team-member:nth-child(5) { animation-delay: 0.5s; }
+        
+        .shuffle-animation {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shuffle-item {
+            position: absolute;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 30px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .people-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Генератор команд</h1>
+            <p>Создайте случайные команды из списка участников</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <div class="input-group">
+                    <label for="teamCount">Количество команд:</label>
+                    <input type="number" id="teamCount" min="2" max="10" value="3">
+                </div>
+                
+                <div class="input-group">
+                    <label for="maxTeamSize">Макс. размер команды:</label>
+                    <input type="number" id="maxTeamSize" min="1" max="20" value="5">
+                </div>
+                
+                <button id="generateBtn">Создать команды</button>
+                <button id="resetBtn" style="background: #6c757d;">Сбросить</button>
+            </div>
+        </div>
+        
+        <div class="people-list">
+            <h2>📋 Список участников</h2>
+            <div class="people-grid" id="peopleGrid">
+                <!-- Люди будут добавлены сюда -->
+            </div>
+        </div>
+        
+        <div class="loading" id="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Распределяем участников по командам...</p>
+        </div>
+        
+        <div class="teams-container" id="teamsContainer">
+            <h2 style="color: #333; text-align: center; margin-bottom: 20px;">🏆 Сформированные команды</h2>
+            <div class="teams-grid" id="teamsGrid">
+                <!-- Команды будут добавлены сюда -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Список участников (можно заменить на реальные данные)
+        const participants = [
+            "Иванов Иван Иванович",
+            "Петров Петр Петрович",
+            "Сидоров Сидор Сидорович",
+            "Козлов Дмитрий Александрович",
+            "Морозова Анна Сергеевна",
+            "Новиков Алексей Владимирович",
+            "Кузнецова Екатерина Ивановна",
+            "Лебедев Артем Михайлович",
+            "Смирнова Ольга Дмитриевна",
+            "Волков Максим Андреевич",
+            "Богданова Татьяна Алексеевна",
+            "Федоров Роман Викторович",
+            "Михайлова Юлия Олеговна",
+            "Семенов Сергей Николаевич",
+            "Григорьева Мария Павловна",
+            "Орлов Денис Валерьевич",
+            "Степанова Анастасия Михайловна",
+            "Никитин Виктор Петрович",
+            "Ковалева Дарья Александровна",
+            "Белов Андрей Дмитриевич"
+        ];
+        
+        let selectedPeople = [...participants];
+        
+        // Инициализация списка участников
+        function initPeopleList() {
+            const grid = document.getElementById('peopleGrid');
+            grid.innerHTML = '';
+            
+            participants.forEach(person => {
+                const card = document.createElement('div');
+                card.className = 'person-card selected';
+                card.textContent = person;
+                card.onclick = () => togglePersonSelection(person, card);
+                grid.appendChild(card);
+            });
+        }
+        
+        // Выбор/отмена выбора участника
+        function togglePersonSelection(person, card) {
+            const index = selectedPeople.indexOf(person);
+            if (index > -1) {
+                selectedPeople.splice(index, 1);
+                card.classList.remove('selected');
+            } else {
+                selectedPeople.push(person);
+                card.classList.add('selected');
+            }
+        }
+        
+        // Генерация команд
+        function generateTeams() {
+            const teamCount = parseInt(document.getElementById('teamCount').value);
+            const maxTeamSize = parseInt(document.getElementById('maxTeamSize').value);
+            
+            if (selectedPeople.length === 0) {
+                alert('Выберите хотя бы одного участника!');
+                return;
+            }
+            
+            if (teamCount < 1) {
+                alert('Количество команд должно быть больше 0!');
+                return;
+            }
+            
+            // Показываем загрузку
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('teamsContainer').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+            
+            // Имитация анимации распределения
+            setTimeout(() => {
+                distributeTeams(teamCount, maxTeamSize);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('teamsContainer').style.display = 'block';
+                document.getElementById('generateBtn').disabled = false;
+            }, 2000);
+        }
+        
+        // Распределение по командам
+        function distributeTeams(teamCount, maxTeamSize) {
+            // Перемешиваем участников
+            const shuffled = [...selectedPeople].sort(() => Math.random() - 0.5);
+            
+            // Создаем команды
+            const teams = Array.from({ length: teamCount }, () => []);
+            
+            // Распределяем участников по командам
+            shuffled.forEach((person, index) => {
+                const teamIndex = index % teamCount;
+                if (teams[teamIndex].length < maxTeamSize) {
+                    teams[teamIndex].push(person);
+                }
+            });
+            
+            // Отображаем команды
+            displayTeams(teams);
+        }
+        
+        // Отображение команд
+        function displayTeams(teams) {
+            const grid = document.getElementById('teamsGrid');
+            grid.innerHTML = '';
+            
+            teams.forEach((team, index) => {
+                if (team.length === 0) return; // Пропускаем пустые команды
+                
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-card';
+                
+                const teamHeader = document.createElement('div');
+                teamHeader.className = 'team-header';
+                teamHeader.innerHTML = `<h3>Команда ${index + 1}</h3><p>${team.length} участников</p>`;
+                
+                const teamMembers = document.createElement('div');
+                teamMembers.className = 'team-members';
+                
+                team.forEach(member => {
+                    const memberDiv = document.createElement('div');
+                    memberDiv.className = 'team-member';
+                    memberDiv.textContent = member;
+                    teamMembers.appendChild(memberDiv);
+                });
+                
+                teamCard.appendChild(teamHeader);
+                teamCard.appendChild(teamMembers);
+                grid.appendChild(teamCard);
+            });
+        }
+        
+        // Сброс
+        function reset() {
+            selectedPeople = [...participants];
+            initPeopleList();
+            document.getElementById('teamsContainer').style.display = 'none';
+            document.getElementById('teamCount').value = 3;
+            document.getElementById('maxTeamSize').value = 5;
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            initPeopleList();
+            
+            document.getElementById('generateBtn').onclick = generateTeams;
+            document.getElementById('resetBtn').onclick = reset;
+        });
+    </script>
+</body>
+</html>
