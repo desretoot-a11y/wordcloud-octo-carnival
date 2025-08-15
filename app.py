@@ -192,6 +192,10 @@ def remove_word():
     global_storage.remove_word(user_id, word)
     return jsonify(success=True)
 
+@app.route("/team-generator")
+def team_generator():
+    return render_template("team-generator.html")
+
 @app.route("/clear-user")
 def clear_user_words():
     if 'user_id' not in session:
