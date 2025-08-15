@@ -171,6 +171,12 @@
     </style>
 </head>
 <body>
+    <div class="nav-tabs">
+        <a href="/" class="nav-tab">Главная</a>
+        <a href="/team-generator" class="nav-tab">Генератор команд</a>
+        <a href="/admin?password={{ request.args.get('password') }}" class="nav-tab">Админка</a>
+    </div>
+    
     <div class="container">
         <header>
             <h1>Облако слов</h1>
