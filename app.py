@@ -4,7 +4,7 @@ import time
 import re
 import threading
 import numpy as np
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, jsonify
 from wordcloud import WordCloud, STOPWORDS
@@ -258,6 +258,129 @@ def clear_all_words():
 @app.route("/display")
 def display_fullscreen():
     return render_template("cloud-display.html", ts=int(time.time()))
+
+
+# Добавить функции обработки фраз
+def extract_keywords_from_text(text):
+    """Извлечение ключевых слов из текста с нормализацией"""
+    # Очистка текста
+    text = text.lower().strip()
+    
+    # Удаление лишних символов, оставляем кириллицу, латиницу, цифры и пробелы
+    text = re.sub(r'[^\w\s\u0400-\u04FF]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Разделение на слова
+    words = text.split()
+    
+    # Фильтрация коротких слов и чисел
+    words = [word for word in words if len(word) > 2 and not word.isdigit()]
+    
+    # Нормализация слов
+    normalized_words = []
+    for word in words:
+        try:
+            parsed = morph.parse(word)[0]
+            normalized = parsed.normal_form
+            # Фильтруем служебные части речи
+            if parsed.tag.POS not in ['PREP', 'CONJ', 'PRCL', 'INTJ']:  # предлоги, союзы, частицы, междометия
+                normalized_words.append(normalized)
+        except:
+            # Если не удалось нормализовать, добавляем как есть
+            normalized_words.append(word)
+    
+    return list(set(normalized_words))  # Убираем дубликаты
+
+def extract_phrases(text, max_phrase_length=4):
+    """Извлечение фраз из текста"""
+    import nltk
+    from nltk.util import ngrams
+    
+    # Очистка текста
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s\u0400-\u04FF]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Разделение на слова
+    words = text.split()
+    words = [word for word in words if len(word) > 2 and not word.isdigit()]
+    
+    # Извлечение n-грамм (фраз)
+    phrases = []
+    for n in range(2, min(max_phrase_length + 1, len(words) + 1)):
+        n_grams = ngrams(words, n)
+        for gram in n_grams:
+            phrase = ' '.join(gram)
+            if len(phrase.split()) >= 2:  # Только фразы из 2+ слов
+                phrases.append(phrase)
+    
+    return phrases
+
+# Добавить маршрут для обработки фраз
+@app.route("/process-phrase", methods=["POST"])
+def process_phrase():
+    if 'user_id' not in session:
+        return jsonify(success=False, error="No session"), 401
+    
+    user_id = session['user_id']
+    phrase = request.form.get("phrase", "").strip()
+    
+    if not phrase:
+        return jsonify(success=False, error="Empty phrase"), 400
+    
+    # Извлекаем ключевые слова
+    keywords = extract_keywords_from_text(phrase)
+    
+    # Добавляем нормализованные слова
+    added_words = []
+    for keyword in keywords:
+        if keyword.strip():
+            global_storage.add_word(user_id, keyword.strip())
+            added_words.append(keyword.strip())
+    
+    return jsonify({
+        'success': True,
+        'added_words': added_words,
+        'count': len(added_words)
+    })
+
+# Альтернативный метод - извлечение фраз
+@app.route("/extract-phrases", methods=["POST"])
+def extract_phrases_route():
+    if 'user_id' not in session:
+        return jsonify(success=False, error="No session"), 401
+    
+    user_id = session['user_id']
+    text = request.form.get("text", "").strip()
+    
+    if not text:
+        return jsonify(success=False, error="Empty text"), 400
+    
+    # Извлекаем фразы
+    phrases = extract_phrases(text)
+    
+    # Для каждой фразы извлекаем ключевые слова
+    all_keywords = []
+    for phrase in phrases[:10]:  # Ограничиваем 10 фразами
+        keywords = extract_keywords_from_text(phrase)
+        all_keywords.extend(keywords)
+    
+    # Убираем дубликаты
+    unique_keywords = list(set(all_keywords))
+    
+    # Добавляем в хранилище
+    added_words = []
+    for keyword in unique_keywords:
+        if keyword.strip():
+            global_storage.add_word(user_id, keyword.strip())
+            added_words.append(keyword.strip())
+    
+    return jsonify({
+        'success': True,
+        'added_words': added_words,
+        'count': len(added_words),
+        'phrases_found': len(phrases)
+    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
