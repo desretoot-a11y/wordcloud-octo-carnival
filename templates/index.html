@@ -212,6 +212,183 @@
             
             <button class="clear-btn" onclick="clearUserWords()">❌ Очистить мои слова</button>
         </div>
+        <div class="input-section">
+            <div class="tabs" style="display: flex; gap: 5px; margin-bottom: 20px; justify-content: center;">
+                <button class="tab-btn active" onclick="switchTab('words')">Слова</button>
+                <button class="tab-btn" onclick="switchTab('phrase')">Фраза</button>
+                <button class="tab-btn" onclick="switchTab('text')">Текст</button>
+            </div>
+            
+            <!-- Ввод слов через пробел -->
+            <div class="tab-content" id="words-tab">
+                <form method="POST" action="/">
+                    <div class="input-group">
+                        <input type="text" name="text" placeholder="Введите слова через пробел..." required>
+                        <input type="hidden" name="input_mode" value="words">
+                        <button type="submit">Добавить</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Обработка фразы -->
+            <div class="tab-content" id="phrase-tab" style="display: none;">
+                <div class="input-group" style="flex-direction: column; gap: 15px;">
+                    <textarea id="phraseInput" placeholder="Введите фразу или предложение..." 
+                             style="width: 100%; min-height: 100px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Montserrat', sans-serif; resize: vertical;"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.9rem; color: #666;">
+                            Автоматическая нормализация и извлечение ключевых слов
+                        </div>
+                        <button onclick="processPhrase()" id="phraseBtn">Обработать фразу</button>
+                    </div>
+                    <div id="phraseResult" style="display: none; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
+                        <div id="phraseResultContent"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Обработка текста -->
+            <div class="tab-content" id="text-tab" style="display: none;">
+                <form method="POST" action="/">
+                    <input type="hidden" name="input_mode" value="text">
+                    <div class="input-group" style="flex-direction: column; gap: 15px;">
+                        <textarea name="text" placeholder="Введите текст целиком..." 
+                                 style="width: 100%; min-height: 150px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Montserrat', sans-serif; resize: vertical;" 
+                                 required></textarea>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" name="remove_punctuation" checked> 
+                                    <span>Удалять знаки препинания</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 8px;">
+                                    <input type="checkbox" name="to_lowercase" checked> 
+                                    <span>Приводить к нижнему регистру</span>
+                                </label>
+                            </div>
+                            <button type="submit">Обработать текст</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <style>
+        .tab-btn {
+            background-color: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background-color: #dee2e6;
+        }
+        
+        .loading-spinner-small {
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #3498db;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        </style>
+        
+        <script>
+        function switchTab(tabName) {
+            // Скрываем все табы
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Убираем активный класс у кнопок
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Показываем нужный таб и делаем кнопку активной
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            event.target.classList.add('active');
+        }
+        
+        function processPhrase() {
+            const phrase = document.getElementById('phraseInput').value.trim();
+            const resultDiv = document.getElementById('phraseResult');
+            const resultContent = document.getElementById('phraseResultContent');
+            const button = document.getElementById('phraseBtn');
+            
+            if (!phrase) {
+                alert('Введите фразу!');
+                return;
+            }
+            
+            // Показываем загрузку
+            button.innerHTML = '<div class="loading-spinner-small"></div> Обработка...';
+            button.disabled = true;
+            
+            // Отправляем запрос
+            const formData = new FormData();
+            formData.append('phrase', phrase);
+            
+            fetch('/process-phrase', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultContent.innerHTML = `
+                        <div style="color: #27ae60; font-weight: 600; margin-bottom: 10px;">
+                            ✅ Добавлено ${data.count} ключевых слов:
+                        </div>
+                        <div style="font-size: 0.9rem; background: white; padding: 10px; border-radius: 5px; border: 1px solid #e0e0e0;">
+                            ${data.added_words.join(', ')}
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                            Фраза нормализована и ключевые слова добавлены в ваш список
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                    
+                    // Обновляем список слов
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    resultContent.innerHTML = `<div style="color: #e74c3c;">❌ Ошибка: ${data.error || 'Неизвестная ошибка'}</div>`;
+                    resultDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                resultContent.innerHTML = `<div style="color: #e74c3c;">❌ Ошибка: ${error.message}</div>`;
+                resultDiv.style.display = 'block';
+            })
+            .finally(() => {
+                button.innerHTML = 'Обработать фразу';
+                button.disabled = false;
+            });
+        }
+        </script>
     </div>
 
     <script>
