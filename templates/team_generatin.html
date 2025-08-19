@@ -485,7 +485,7 @@
     </div>
 
     <script>
-        // Список участников Сбербанка (можно заменить на реальные данные)
+        // Список участников Сбербанка
         const participants = [
             "Эги Андрей",
             "Цыбенко Елена",
@@ -510,6 +510,16 @@
             "Корсакова Елена",
             "Поташева Надежда",
             "Сайдуллин Данил"
+        ];
+        
+        // Предопределённые команды по новому приказу
+        const predefinedTeams = [
+            ["Эги Андрей", "Цыбенко Елена", "Куликов Алексей", "Андрианова Яна"],
+            ["Бакотин Илья", "Куличенко Елизавета", "Захаров Георгий", "Шукан Николай"],
+            ["Михайленко Алексей", "Абрамчук Илья", "Панарин Сергей", "Чумаков Александр"],
+            ["Болдырева Анна", "Данилов Антон", "Пудовкин Максим", "Гирш Антон"],
+            ["Zаярский Иван", "Третьяков Максим", "Абрамов Дмитрий", "Загидулин Александр"],
+            ["Корсакова Елена", "Поташева Надежда", "Сайдуллин Данил"]
         ];
         
         let selectedPeople = [...participants];
@@ -550,7 +560,7 @@
             document.getElementById('teamCountDisplay').textContent = document.getElementById('teamCount').value;
         }
         
-        // Генерация команд
+        // Генерация команд по предопределённому списку
         function generateTeams() {
             const teamCount = parseInt(document.getElementById('teamCount').value);
             const maxTeamSize = parseInt(document.getElementById('maxTeamSize').value);
@@ -560,19 +570,6 @@
                 return;
             }
             
-            if (teamCount < 1) {
-                alert('Количество команд должно быть больше 0!');
-                return;
-            }
-            
-            const maxPossibleTeams = Math.ceil(selectedPeople.length / maxTeamSize);
-            if (teamCount > maxPossibleTeams) {
-                if (!confirm(`Для ${selectedPeople.length} участников при максимальном размере команды ${maxTeamSize} можно создать максимум ${maxPossibleTeams} команд. Продолжить с ${maxPossibleTeams} командами?`)) {
-                    return;
-                }
-                document.getElementById('teamCount').value = maxPossibleTeams;
-            }
-            
             // Показываем загрузку
             document.getElementById('loading').style.display = 'block';
             document.getElementById('teamsContainer').style.display = 'none';
@@ -580,7 +577,7 @@
             
             // Имитация анимации распределения
             setTimeout(() => {
-                distributeTeams(teamCount, maxTeamSize);
+                distributePredefinedTeams();
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('teamsContainer').style.display = 'block';
                 document.getElementById('generateBtn').disabled = false;
@@ -590,24 +587,15 @@
             }, 2500);
         }
         
-        // Распределение по командам
-        function distributeTeams(teamCount, maxTeamSize) {
-            // Перемешиваем участников
-            const shuffled = [...selectedPeople].sort(() => Math.random() - 0.5);
-            
-            // Создаем команды
-            const teams = Array.from({ length: teamCount }, () => []);
-            
-            // Распределяем участников по командам
-            shuffled.forEach((person, index) => {
-                const teamIndex = index % teamCount;
-                if (teams[teamIndex].length < maxTeamSize) {
-                    teams[teamIndex].push(person);
-                }
-            });
+        // Распределение по предопределённым командам
+        function distributePredefinedTeams() {
+            // Фильтруем предопределённые команды, оставляя только участников из selectedPeople
+            const filteredTeams = predefinedTeams.map(team => 
+                team.filter(member => selectedPeople.includes(member))
+            ).filter(team => team.length > 0); // Убираем пустые команды
             
             // Отображаем команды
-            displayTeams(teams);
+            displayTeams(filteredTeams);
         }
         
         // Отображение команд
@@ -673,6 +661,7 @@
             document.getElementById('teamCount').addEventListener('input', updateStats);
             document.getElementById('maxTeamSize').addEventListener('input', updateStats);
         });
+
     </script>
 </body>
 </html>
